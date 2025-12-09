@@ -1,0 +1,868 @@
+/* ========================
+   СИСТЕМА ЗОН (НАВИГАЦИЯ)
+   ======================== */
+
+/* Сброс отступов у body, чтобы не было "дёрганья" */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Запрещаем обычный скролл страницы */
+}
+
+/* Окно просмотра (фиксированное, как рамка) */
+#camera {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; /* Всё, что за пределами — обрезается */
+    position: relative;
+}
+
+/* Длинная горизонтальная лента из 3 зон */
+#world {
+    display: flex;           /* Выстраиваем зоны в ряд */
+    width: 300vw;            /* Ширина = 3 экрана */
+    height: 100vh;
+    transition: transform 0.5s ease-in-out; /* Плавная анимация сдвига */
+}
+
+/* Общие стили для каждой зоны */
+.zone {
+    width: 100vw;            /* Каждая зона = 1 экран */
+    height: 100vh;
+    flex-shrink: 0;          /* Запрет сжатия */
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;        /* Если контент больше — скроллится внутри */
+}
+
+/* Визуальное разделение зон */
+#zone-animals { 
+    background-color: #7bb369;
+}
+#zone-plants { 
+    background-color: #5a4534; 
+}
+#zone-trees { 
+     background-color: #93dd93;
+}
+
+/* Заглушки для незаполненных зон */
+.zone-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: #5d4037;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.zone-placeholder h1 {
+    font-size: 48px;
+    margin: 0;
+}
+
+.zone-placeholder p {
+    font-size: 20px;
+    margin: 10px 0 0 0;
+}
+
+
+/* ========================
+   ГЛОБАЛЬНЫЙ UI (ПОВЕРХ ИГРЫ)
+   ======================== */
+
+#global-ui {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000; /* Поверх всего игрового мира */
+    pointer-events: none; /* Клики проходят сквозь пустые места */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+/* Все интерактивные элементы восстанавливают клики */
+.hud-top, .hud-bottom, .modal {
+    pointer-events: auto;
+}
+
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (Деньги + Кнопки) --- */
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.coin-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #ffd700;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    border: 2px solid #fff;
+}
+
+.coin-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.menu-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.hud-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #5d4037;
+    border-radius: 8px;
+    background: rgba(255, 251, 240, 0.95);
+    color: #5d4037;
+    transition: all 0.2s ease;
+}
+
+.hud-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.hud-btn:hover {
+    background: #ffd700;
+    border-color: #8d6e63;
+    transform: scale(1.05);
+}
+
+.hud-btn:active {
+    transform: scale(0.98);
+}
+
+/* --- НИЖНЯЯ ПАНЕЛЬ (Навигация) --- */
+.hud-bottom {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+#ui-nav {
+    display: flex;
+    gap: 10px;
+}
+
+#ui-nav button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid #5d4037;
+    border-radius: 8px;
+    background: rgba(255, 251, 240, 0.95);
+    color: #5d4037;
+    transition: all 0.2s ease;
+}
+
+#ui-nav button:hover {
+    background: #ffd700;
+    border-color: #8d6e63;
+    transform: scale(1.05);
+}
+
+#ui-nav button:active {
+    transform: scale(0.98);
+}
+
+/* --- МОДАЛЬНЫЕ ОКНА --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Затемнение фона */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000; /* Поверх даже глобального UI */
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--panel-bg);
+    border: 3px solid var(--brown-border);
+    border-radius: 12px;
+    min-width: 400px;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    background: #8d6e63;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 9px 9px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+
+/* ========================
+   БАЗОВЫЕ СТИЛИ ИГРЫ
+   ======================== */
+
+:root {
+    --bg-color: #5e4545;
+    --panel-bg: #fffbf0;
+    --brown-border: #5d4037;
+    --scroll-thumb: #8d6e63;
+    --scroll-track: #d7ccc8;
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 3px;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    user-select: none;
+}
+
+.game-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    padding: 65px 15px 80px 15px;
+    gap: 15px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+
+/* ========================
+   ОГОРОД (ЛЕВАЯ ЧАСТЬ)
+   ======================== */
+
+.garden-area {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Центрируем грядки */
+    align-items: center;
+
+    background-image: url('Farm_general/background.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    border-radius: 15px;
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Контейнер грядок (Центр) */
+.garden-center-wrapper {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: hidden;
+    padding-bottom: 20px;
+}
+
+.plots-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.plot {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-image: url('Farm_general/cell.png');
+    background-size: cover;
+    position: relative;
+    display: block;
+    border-radius: 6px;
+    cursor: pointer;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+}
+
+.plot.hovered {
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.plant-img {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    width: 80%;
+    height: auto;
+    pointer-events: none;
+    image-rendering: pixelated;
+    z-index: 1;
+}
+
+.harvest-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    background-image: url('Farm_general/hand_small.png');
+    background-size: 65%;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #a46538;
+    border: 2px solid #333;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+}
+
+
+/* ========================
+   САЙДБАР (ПРАВАЯ ЧАСТЬ)
+   ======================== */
+
+.sidebar {
+    flex: 1;
+    min-width: 250px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 3px solid var(--brown-border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 1;
+    min-height: 100px;
+}
+
+.panel-header {
+    background: #8d6e63;
+    color: white;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.header-img {
+    width: 24px;
+    height: 24px;
+}
+
+.panel-content {
+    padding: 8px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+
+/* ========================
+   УДОБРЕНИЯ (В SIDEBAR)
+   ======================== */
+
+.fert-controls-row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fert-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #fff;
+    width: 50px;
+    height: 50px;
+}
+
+.fert-option img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    margin-bottom: 2px;
+}
+
+.fert-option.active {
+    border-color: #4caf50;
+    background: #e8f5e9;
+}
+
+
+/* ========================
+   СПИСКИ (АМБАР/МАГАЗИН)
+   ======================== */
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #ccc;
+    font-size: 13px;
+}
+
+.item-icon {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    margin-right: 8px;
+    image-rendering: pixelated;
+}
+
+.item-count-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #5d4037;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+button.action-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #5d4037;
+    border-radius: 4px;
+    background: #fff;
+    transition: background 0.2s;
+}
+
+button.action-btn:hover {
+    background: #ffd700;
+}
+
+.buy-sapling-btn {
+    margin-top: 5px;
+    padding: 4px 8px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.buy-sapling-btn:hover {
+    background: #45a049;
+}
+
+.buy-sapling-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.sapling-count {
+    font-size: 12px;
+    font-weight: bold;
+    color: #5d4037;
+    margin-top: 2px;
+}
+
+
+/* ========================
+   СЕМЕНА (GRID)
+   ======================== */
+
+.seeds-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+    gap: 10px;
+}
+
+.seed-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    padding: 4px;
+    border-radius: 6px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    aspect-ratio: 1 / 1; 
+    position: relative; 
+    box-sizing: border-box;
+}
+
+.seed-item .seed-icon-img {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+    pointer-events: none;
+    image-rendering: pixelated;
+}
+
+.seed-item:active {
+    cursor: grabbing;
+}
+
+.draggable-clone {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    width: 50px;
+    height: 50px;
+    opacity: 0.85;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    transition: transform 0.1s ease;
+}
+
+
+/* ========================
+   ИНФО ПАНЕЛЬ
+   ======================== */
+
+.info-panel {
+    background: #e3f2fd;
+    border: 2px solid #2196f3;
+    border-radius: 8px;
+    padding: 10px;
+    color: #0d47a1;
+    font-weight: 500;
+    margin-top: auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-panel h3 {
+    margin: 0 0 8px 0;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.info-panel #info-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.info-panel .placeholder {
+    text-align: center;
+    opacity: 0.7;
+    font-size: 14px;
+}
+
+/* ========================
+   САД (ПРАВАЯ ЧАСТЬ)
+   ======================== */
+
+/* Область сада */
+.orchard-area {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Центрируем деревья */
+    align-items: center;
+
+    background-image: url('Trees/Trees_background.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    border-radius: 15px;
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Сетка для деревьев (Центр) */
+.plots-container.orchard-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 30px;
+    max-width: 600px;
+}
+
+/* Переопределение ячейки для САДА */
+.orchard-grid .plot {
+    background-image: none;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.2s;
+}
+
+.orchard-grid .plot:hover, 
+.orchard-grid .plot.hovered {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: #ffd700 !important;
+}
+
+/* ЗОНА ЖИВОТНЫХ */
+
+.ranch-area {
+    flex: 3;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 15px;
+    padding: 10px;
+    gap: 20px;
+
+    background-image: url('Animals/background_animals.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+   
+    position: relative;
+    overflow: hidden;
+}
+
+/* Контейнер для одного типа животных (Загон) */
+.animal-pen {
+    width: 300px;
+    height: 300px;
+    background: rgba(0, 0, 0, 0.1);
+    border: 4px solid #5d4037; /* Забор */
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Заголовок загона */
+.pen-title {
+    background: #5d4037;
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Сетка 2x2 внутри загона */
+.pen-grid {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+}
+
+/* Ячейка животного */
+.animal-slot {
+    position: relative;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end; /* Животное стоит на земле */
+    cursor: pointer;
+    overflow: visible; /* Чтобы пузыри не обрезались */
+}
+
+.animal-slot:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: #ffd700;
+}
+
+/* Спрайт животного */
+.animal-img {
+    width: 80%;
+    height: auto;
+    image-rendering: pixelated;
+    transform-origin: bottom center;
+    transition: filter 0.2s;
+    margin-bottom: 10px;
+}
+
+/* Полоска жизни */
+.life-bar-container {
+    position: absolute;
+    bottom: 2px;
+    left: 10%;
+    width: 80%;
+    height: 4px;
+    background: #fff;
+    border: 1px solid #000;
+    border-radius: 2px;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.life-bar-fill {
+    height: 100%;
+    background: #d32f2f;
+    width: 100%;
+    transition: width 1s linear;
+    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+/* Пузырь с информацией */
+.bubble {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: white;
+    border: 2px solid #333;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.bubble img {
+    width: 20px;
+    height: 20px;
+}
+
+@keyframes popIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+/* АНИМАЦИИ CSS */
+
+/* 1. ДЫХАНИЕ (Взрослые) */
+@keyframes breathe {
+    0%, 100% { transform: scale(1, 1); }
+    50% { transform: scale(1.05, 0.95); }
+}
+
+.anim-idle {
+    animation: breathe 2s infinite ease-in-out;
+}
+
+/* 2. ЖЕВАНИЕ (Процесс) */
+@keyframes eat {
+    0% { transform: rotate(0deg) translateY(0); }
+    25% { transform: rotate(-5deg) translateY(2px); }
+    50% { transform: rotate(0deg) translateY(0); }
+    75% { transform: rotate(5deg) translateY(1px); }
+    100% { transform: rotate(0deg) translateY(0); }
+}
+.anim-eat {
+    animation: eat 0.6s infinite linear;
+}
+
+/* 3. МАЛЫШ (Прыжок) */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.anim-baby {
+    animation: bounce 0.8s infinite ease-in-out;
+}
+
+/* 4. УХОД (Смерть) */
+.anim-dead {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 1.5s ease-out;
+}
