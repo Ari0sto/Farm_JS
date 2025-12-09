@@ -16,7 +16,10 @@ export function initPlants() {
 
     function createGrid(count) {
         plotsContainer.innerHTML = '';
-        gameState.plots = new Array(count).fill(null);
+
+        if (!gameState.plots || gameState.plots.length === 0) {
+            gameState.plots = new Array(count).fill(null);
+        }
 
         for (let i = 0; i < count; i++) {
             const div = document.createElement('div');
@@ -24,7 +27,20 @@ export function initPlants() {
             div.dataset.id = i;
             plotsContainer.appendChild(div);
         }
+
         plotsElements = document.querySelectorAll('.plot');
+
+        // ВОССТАНОВЛЕНИЕ
+        gameState.plots.forEach((plant, index) => {
+            if (plant) {
+                renderPlot(index);
+
+                // Перезапуск таймера роста
+                if (plant.currentStage < plant.totalStages) {
+                    runGrowthCycle(index);
+                }
+            }
+        });
     }
 
     function renderSeedsList() {

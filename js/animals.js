@@ -392,4 +392,34 @@ export function initAnimals() {
             <p style="font-size:12px; color:#555">Ест: ${PLANTS_CONFIG[config.food].name}</p>
         `;
     }
+
+    // ВОССТАНОВЛЕНИЕ ПРИ ЗАГРУЗКЕ
+    // Пробегаем по состоянию животных
+    Object.keys(gameState.animalPlots).forEach(slotId => {
+        const animal = gameState.animalPlots[slotId];
+        
+        // Если животное умерло во время оффлайна
+        if (animal.lifeRemaining <= 0) {
+            delete gameState.animalPlots[slotId];
+            return;
+        }
+        renderAnimalInSlot(slotId);
+
+        // Перезапуск логики
+
+        // 1. Таймер старения (запускаем всем, кроме малышей)
+        if (animal.state !== 'baby') {
+            startLifeCycle(slotId);
+        }
+
+        // 2. Таймер роста (baby)
+        if (animal.state === 'baby') {
+            runGrowthTimer(slotId);
+        }
+
+        // 3. Таймер производства (processing)
+        if (animal.state === 'processing') {
+            runProductionTimer(slotId);
+        }
+    });
 }

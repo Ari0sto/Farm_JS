@@ -50,10 +50,10 @@ export function initTrees() {
         }
     }
 
-    // ! ВАЖНО: Подписываем эту функцию на глобальные обновления !
+    // Подписываем эту функцию на глобальные обновления !
     subscribeToUpdate(() => {
         renderTreeFertilizers();
-        renderSaplingsList(); // ! ВАЖНО: Обновляем список саженцев при изменении денег/инвентаря
+        renderSaplingsList(); // Обновляем список саженцев при изменении денег/инвентаря
     });
     
     // Первый запуск отрисовки
@@ -79,7 +79,7 @@ export function initTrees() {
         gameState.treePlots.forEach((tree, index) => {
              if(tree) {
                  renderPlot(index);
-                 // Если дерево еще растет, перезапускаем таймер (упрощенно)
+                 // Если дерево еще растет, перезапускаем таймер
                  if(tree.currentStage < tree.totalStages) {
                      runGrowthCycle(index);
                  }
@@ -150,7 +150,7 @@ export function initTrees() {
         moveClone(e.pageX, e.pageY);
         plotsElements.forEach(plot => plot.classList.remove('hovered'));
 
-        // Важно: ищем элементы только внутри нашего контейнера сада
+        // ищем элементы только внутри нашего контейнера сада
         let elem = document.elementFromPoint(e.clientX, e.clientY);
         let plot = elem?.closest('.orchard-grid .plot'); // Специфичный селектор
         if (plot) plot.classList.add('hovered');
