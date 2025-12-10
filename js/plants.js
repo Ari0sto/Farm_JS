@@ -143,6 +143,8 @@ export function initPlants() {
             }
         }
 
+        gameState.stats.totalPlanted++;
+
         updateUI();
 
         const config = PLANTS_CONFIG[type];

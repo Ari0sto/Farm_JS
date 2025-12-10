@@ -1,4 +1,4 @@
-import { updateUI, loadGame, renderBarnModal, renderShopModal } from './state.js';
+import { updateUI, loadGame, renderBarnModal, renderShopModal, renderAchievementsModal } from './state.js';
 import { initPlants } from './plants.js';
 import { initTrees } from './trees.js';
 import { initAnimals } from './animals.js';
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnTrees && world)  btnTrees.onclick = () => world.style.transform = 'translateX(-200vw)';
 
 
-    // === МОДАЛЬНЫЕ ОКНА (АМБАР И МАГАЗИН) ===
+    // === МОДАЛЬНЫЕ ОКНА ===
     const modalBarn = document.getElementById('modal-barn');
     const modalShop = document.getElementById('modal-shop');
     
@@ -46,23 +46,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const barnContent = document.getElementById('barn-modal-list');
     const shopContent = document.getElementById('shop-modal-list');
 
-    // Открытие Амбара
+    const modalAch = document.getElementById('modal-achievements');
+    const btnAch = document.getElementById('btn-achievements');
+    const closeAch = document.getElementById('close-achievements');
+    const listAch = document.getElementById('achievements-list');
+
+   // === ЛОГИКА ОТКРЫТИЯ/ЗАКРЫТИЯ ===
+
+    // 1. Амбар
     if (btnBarn) {
         btnBarn.onclick = () => {
-            modalBarn.classList.remove('hidden');
-            renderBarnModal(barnContent);
+            renderBarnModal(barnContent); // Сначала рендерим контент
+            modalBarn.classList.remove('hidden'); // Потом показываем
         };
     }
 
-    // Открытие Магазина
+    // 2. Магазин
     if (btnShop) {
         btnShop.onclick = () => {
-            modalShop.classList.remove('hidden');
             renderShopModal(shopContent);
+            modalShop.classList.remove('hidden');
         };
     }
 
-    // Закрытие
+    // 3. Достижения
+    if (btnAch) {
+        btnAch.onclick = () => {
+            renderAchievementsModal(listAch); // Генерируем список из state.js
+            modalAch.classList.remove('hidden');
+        };
+    }
+
+    // Закрытие по крестику
     if (closeBarn) closeBarn.onclick = () => modalBarn.classList.add('hidden');
     if (closeShop) closeShop.onclick = () => modalShop.classList.add('hidden');
+    
+    if (closeAch) closeAch.onclick = () => modalAch.classList.add('hidden');
+
+    // Закрытие по клику на темный фон
+    window.onclick = (event) => {
+        if (event.target === modalBarn) modalBarn.classList.add('hidden');
+        if (event.target === modalShop) modalShop.classList.add('hidden');
+        if (event.target === modalAch) modalAch.classList.add('hidden');
+    };
 });

@@ -56,6 +56,32 @@ export const FERTILIZERS = {
     super: { name: 'Супер', price: 25, multiplier: 0.5, icon: 'Farm_general/super_fertilizer.png' }
 };
 
+export const ACHIEVEMENTS_CONFIG = [
+    {
+        id: 'magnate', 
+        title: 'Магнат', 
+        desc: 'Накопить 100 монет', 
+        icon: '💰',
+        check: (state) => state.money >= 100   
+    },
+    { 
+        id: 'gardener', 
+        title: 'Огородник', 
+        desc: 'Посадить 10 любых растений', 
+        icon: '🥕',
+        check: (state) => state.stats.totalPlanted >= 10 
+    },
+
+    { 
+        id: 'rancher', 
+        title: 'Скотовод', 
+        desc: 'Купить первое животное', 
+        icon: '🐮',
+        check: (state) => state.stats.totalAnimalsBought >= 1 
+    }
+
+];
+
 export const BARN_LIMIT = 50;
 const SAVE_KEY = 'my_farm_save_v1';
 
@@ -73,6 +99,13 @@ const initialState = {
         saplings: {},
         animals: { cow: 0, chicken: 0, sheep: 0 }
     },
+    stats: {
+        totalPlanted: 0,
+        totalAnimalsBought: 0
+    },
+
+    completedAchievements: [], // Массив ID выполненных достижений
+
     selectedFertilizer: 'none',
     lastSaveTime: Date.now()
 };
@@ -110,6 +143,13 @@ export function loadGame() {
             const savedState = JSON.parse(serialized);
             Object.assign(gameState, savedState);
 
+            if (!gameState.stats) {
+                gameState.stats = { totalPlanted: 0, totalAnimalsBought: 0 };
+            }
+            if (!gameState.completedAchievements) {
+                gameState.completedAchievements = [];
+            }
+
             const now = Date.now();
             const timePassed = now - (savedState.lastSaveTime || now);
             
@@ -141,13 +181,67 @@ window.resetGame = function() {
 // Автосохранение
 setInterval(saveGame, 5000);
 
+// Логика достижений
+export function checkAchievements() {
+    let newUnlock = false;
+
+    ACHIEVEMENTS_CONFIG.forEach(ach => {
+        // Если еще не выполнено
+        if (!gameState.completedAchievements.includes(ach.id)) {
+
+            // Проверяем условие
+            if (ach.check(gameState)) {
+                gameState.completedAchievements.push(ach.id);
+                newUnlock = true;
+
+                console.log(`ДОСТИЖЕНИЕ ПОЛУЧЕНО: ${ach.title}`);
+            }
+        }
+    });
+
+    // Если что-то открыли, сохраняем игру, чтобы не потерять прогресс
+    if (newUnlock) {
+        saveGame();
+    }
+}
+
+export function renderAchievementsModal(containerElement) {
+    containerElement.innerHTML = '';
+
+    if (gameState.completedAchievements.length === ACHIEVEMENTS_CONFIG.length) {
+        const congrats = document.createElement('div');
+        congrats.innerHTML = '<h3 style="text-align:center; color:#4caf50;">Все достижения получены! 🎉</h3>';
+        containerElement.appendChild(congrats);
+    }
+    ACHIEVEMENTS_CONFIG.forEach(ach => {
+        const isDone = gameState.completedAchievements.includes(ach.id);
+        const row = document.createElement('div');
+
+        row.className = `achievement-row ${isDone ? 'completed' : ''}`;
+
+        row.innerHTML = `
+            <div class="ach-icon">
+                ${ach.icon} </div>
+            <div class="ach-info">
+                <h4>${ach.title}</h4>
+                <p>${ach.desc}</p>
+            </div>
+            <div class="ach-status">
+                ${isDone ? '✅' : '🔒'}
+            </div>
+        `;
+        containerElement.appendChild(row);
+    });
+}
+
+
 // === ЛОГИКА UI ===
 
 export function subscribeToUpdate(callback) {
     uiSubscribers.push(callback);
 }
 
-// !!! ВОТ ОНА, ЕДИНСТВЕННАЯ UPDATE UI !!!
+// ЕДИНСТВЕННАЯ UPDATE UI ФУНКЦИЯ
 export function updateUI() {
     if (!coinDisplay) {
         coinDisplay = document.getElementById('coin-display');
@@ -156,6 +250,8 @@ export function updateUI() {
     if (coinDisplay) {
         coinDisplay.textContent = gameState.money;
     }
+
+    checkAchievements();
 
     renderFertilizerSelector();
     uiSubscribers.forEach(callback => callback());
@@ -321,6 +417,9 @@ export function renderShopModal(containerElement) {
             if(buy(a.price)) { 
                 if(!gameState.inventory.animals[k]) gameState.inventory.animals[k] = 0;
                 gameState.inventory.animals[k]++; 
+
+                gameState.stats.totalAnimalsBought++;
+
                 updateUI(); 
                 renderShopModal(containerElement); 
             }
