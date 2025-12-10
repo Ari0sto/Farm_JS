@@ -95,12 +95,110 @@ body, html {
     pointer-events: auto;
 }
 
-/* --- ВЕРХНЯЯ ПАНЕЛЬ (Деньги + Кнопки) --- */
+/* --- ВЕРХНЯЯ ПАНЕЛЬ (Деньги + Достижения) --- */
 .hud-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
 }
+
+.hud-left-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+/* Кнопка достижений */
+.achievements-btn {
+    background: rgba(255, 251, 240, 0.9);
+    border: 2px solid #ffd700;
+    border-radius: 50%; /* Круглая кнопка */
+    width: 45px;
+    height: 45px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: transform 0.2s, background 0.2s;
+    margin-left: 10px;
+}
+
+.achievements-btn:hover {
+    transform: scale(1.1);
+    background: #fff;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.achievements-btn img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+/* СПИСОК ДОСТИЖЕНИЙ (inside modal window)*/
+.achievement-row {
+    background: #f0e6d2;
+    border: 2px solid #bcaaa4;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    opacity: 0.7; /* По умолчанию полупрозрачное (не выполнено) */
+    transition: all 0.3s ease;
+    filter: grayscale(100%); /* ЧБ если не выполнено */
+}
+
+/* Стиль для выполненного достижения */
+.achievement-row.completed {
+    background: linear-gradient(to right, #fffbf0, #fff8e1);
+    border-color: #ffd700;
+    opacity: 1;
+    filter: grayscale(0%);
+    box-shadow: 0 4px 8px rgba(218, 165, 32, 0.2);
+}
+
+.ach-icon {
+    font-size: 32px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #8d6e63;
+}
+
+.achievement-row.completed .ach-icon {
+    border: 2px solid #ffd700;
+    background: #fff;
+}
+
+.ach-info {
+    flex-grow: 1;
+}
+
+.ach-info h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #3e2723;
+}
+
+.ach-info p {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #5d4037;
+}
+
+.ach-status {
+    font-size: 24px;
+}
+
 
 .coin-wrapper {
     display: flex;

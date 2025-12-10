@@ -159,11 +159,20 @@
     <!-- ГЛОБАЛЬНЫЙ UI ПОВЕРХ ВСЕГО -->
     <div id="global-ui">
         
-        <!-- Верхняя панель: Деньги + Кнопки -->
+        <!-- Верхняя панель: Деньги + Ачивки -->
         <div class="hud-top">
-            <div class="coin-wrapper">
-                <img src="Farm_general/coin.png" class="coin-icon" alt="Монеты">
-                <span id="coin-display">50</span>₴
+
+            <div class="hud-left-group">
+
+                <div class="coin-wrapper">
+                    <img src="Farm_general/coin.png" class="coin-icon" alt="Монеты">
+                    <span id="coin-display">50</span>₴
+                </div>
+
+                <button id="btn-achievements" class="achievements-btn">
+                    🏆
+                </button>
+
             </div>
             
             <div class="menu-buttons">
@@ -175,6 +184,17 @@
                     <img src="Farm_general/store.png" alt="Магазин">
                     Магазин
                 </button>
+            </div>
+        </div>
+
+        <div id="modal-achievements" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Достижения</h3>
+                    <button id="close-achievements" class="close-btn">✖</button>
+                </div>
+                <div id="achievements-list" class="modal-body">
+                </div>
             </div>
         </div>
 
